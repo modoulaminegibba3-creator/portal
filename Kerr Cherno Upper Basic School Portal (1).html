@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kerr Cherno Upper Basic School Portal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+:root{--bg:#f4f6f3;--card:#fff;--tx:#1b2620;--mut:#62706a;--pri:#1f7a4d;--pri2:#e3f1ea;--line:#d9e0db;--warn:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121815;--card:#1b2420;--tx:#e7eee9;--mut:#9aa8a0;--pri:#4cc38a;--pri2:#21352b;--line:#2e3b34;--warn:#ff8a80}}
+:root[data-theme="dark"]{--bg:#121815;--card:#1b2420;--tx:#e7eee9;--mut:#9aa8a0;--pri:#4cc38a;--pri2:#21352b;--line:#2e3b34;--warn:#ff8a80}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2,h3{margin:0 0 .5rem}h2{font-size:1.25rem}h3{font-size:1rem}
+.login{max-width:430px;margin:8vh auto;padding:0 16px;text-align:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.roles{display:flex;gap:8px;margin:14px 0}.roles button{flex:1}
+button,.btn{font:inherit;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--tx);cursor:pointer}
+button.on,button.p{background:var(--pri);color:#fff;border-color:var(--pri)}button.d{color:var(--warn)}
+input,select,textarea{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--tx);max-width:100%}
+.login input{width:100%;margin-bottom:10px}
+.app{display:flex;min-height:100vh}nav{width:210px;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;flex-shrink:0}
+nav .b{font-weight:700;color:var(--pri);margin-bottom:10px;font-size:.95rem}
+nav button{display:block;width:100%;text-align:left;border:0;margin-bottom:2px;background:none}nav button.on{background:var(--pri2);color:var(--pri);font-weight:600}
+main{flex:1;padding:18px;min-width:0}.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}.stat b{font-size:1.6rem;color:var(--pri);display:block}.stat span{color:var(--mut);font-size:.85rem}
+.w{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.88rem}th,td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;white-space:nowrap}th{color:var(--mut);font-weight:600}
+td input{width:100%;min-width:90px;padding:4px 6px}td input.s{min-width:60px;width:70px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}.mut{color:var(--mut);font-size:.85rem}
+.tag{background:var(--pri2);color:var(--pri);padding:2px 8px;border-radius:99px;font-size:.78rem}
+@media(max-width:700px){.app{flex-direction:column}nav{width:100%;display:flex;overflow-x:auto;gap:4px;border-right:0;border-bottom:1px solid var(--line)}nav .b{display:none}nav button{width:auto;white-space:nowrap}}
+@media print{nav,.top button,.noprint{display:none!important}}
+</style></head><body><div id="root"></div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SUBJ=['English','Mathematics','Agriculture','Integrated Science','Social & Environmental Studies'];
+const CLS=['Grade 7','Grade 8','Grade 9'];
+const DAYS=['Period','Monday','Tuesday','Wednesday','Thursday','Friday'];
+let db=null;try{db=JSON.parse(localStorage.getItem('kc_portal'))}catch(e){}
+if(!db)db={users:[
+{id:'admin',role:'admin',name:'Principal',pass:'admin123',phone:''},
+{id:'t001',role:'teacher',name:'Mr. Jallow',pass:'teach123',cls:'Grade 7',subject:'Agriculture',phone:''},
+{id:'s001',role:'student',name:'Fatou Ceesay',pass:'stud123',cls:'Grade 7',gender:'F',dob:'',guardian:'',phone:'',address:''},
+{id:'s002',role:'student',name:'Lamin Darboe',pass:'stud123',cls:'Grade 7',gender:'M',dob:'',guardian:'',phone:'',address:''}],
+grades:{s001:{English:{cat:32,exam:48},Mathematics:{cat:35,exam:50},Agriculture:{cat:38,exam:55}},s002:{English:{cat:28,exam:41}}},
+att:{},conduct:[],
+ann:[{t:'Welcome to the new term',d:new Date().toISOString().slice(0,10),by:'Principal'}],
+mat:[{t:'Crop Production Notes',type:'Lesson note',cls:'Grade 7',by:'Mr. Jallow',note:'Chapters 1-3'}],
+tt:[DAYS,['1','English','Maths','Agriculture','Science','SES'],['2','Maths','English','Science','SES','Agriculture']]};
+const save=()=>{try{localStorage.setItem('kc_portal',JSON.stringify(db))}catch(e){}};
+let S={user:null,role:'student',view:'dash',err:''};
+const NAV={admin:[['dash','Dashboard'],['users','Users & Roles'],['reg','Register & Bios'],['tt','Timetable'],['grades','Grades'],['ann','Announcements'],['conduct','Conduct Logs'],['rep','Reports'],['scale','Logo & Grading Scale']],
+teacher:[['dash','Dashboard'],['att','Attendance'],['gb','Gradebook'],['reg','Register & Bios'],['tt','Timetable'],['mat','Materials'],['conduct','Conduct Logs'],['ann','Announcements']],
+student:[['dash','Dashboard'],['res','My Results'],['prof','My Profile'],['tt','Timetable'],['mat','Homework & Library'],['ann','Announcements']]};
+const DS=[{min:85,l:'A',p:4},{min:74,l:'B',p:3},{min:60,l:'C',p:2},{min:50,l:'D',p:1},{min:40,l:'E',p:0.5},{min:0,l:'F',p:0}];
+if(!db.scale||db.scaleV!==2){db.scale=JSON.parse(JSON.stringify(DS));db.scaleV=2}
+const band=t=>[...db.scale].sort((a,b)=>b.min-a.min).find(b=>t>=b.min)||{l:'F',p:0};
+const letter=t=>band(t).l;
+const gpa=id=>{const v=Object.values(db.grades[id]||{});return v.length?v.reduce((s,g)=>s+band(tot(g)).p,0)/v.length:null};
+const fg=x=>x==null?'–':x.toFixed(2);
+const logo=h=>db.logo?`<img src="${db.logo}" alt="logo" style="height:${h}px;width:auto;border-radius:8px;vertical-align:middle">`:'🏫';
+const pic=(u,h)=>u.photo?`<img src="${u.photo}" alt="" style="width:${h}px;height:${h}px;border-radius:50%;object-fit:cover;vertical-align:middle">`:`<span style="display:inline-block;width:${h}px;height:${h}px;line-height:${h}px;text-align:center;border-radius:50%;background:var(--pri2);vertical-align:middle">👤</span>`;
+function imgUp(el,max,mime,cb){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL(mime,0.85))};im.src=r.result};r.readAsDataURL(f)}
+const logoCard=()=>`<div class="card"><h3>School Logo</h3><div class="row">${logo(80)}<label class="btn">Upload / change logo<input type="file" accept="image/*" hidden onchange="imgUp(this,256,'image/png',d=>{db.logo=d;save();render()})"></label><button class="d" onclick="db.logo='';save();render()">Remove</button></div><p class="mut">Shown on the login page, menu and report cards. Student photos are changed in Register & Bios.</p></div>`;
+const tot=g=>(+g.cat||0)+(+g.exam||0);
+const avgOf=id=>{const g=db.grades[id]||{},v=Object.values(g).map(tot);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
+const comment=a=>a==null?'No results yet.':a>=85?'Outstanding performance. Keep up the excellent work.':a>=74?'Very good work. Aim even higher next term.':a>=60?'Good effort. More consistent revision will help.':a>=50?'Fair performance. Needs to put in more effort.':'Below expected level. Extra support and homework are advised.';
+const attPct=id=>{let p=0,n=0;for(const k in db.att){if(db.att[k][id]){n++;if(db.att[k][id]==='P')p++}}return n?Math.round(100*p/n):null};
+const today=()=>new Date().toISOString().slice(0,10);
+const studs=c=>db.users.filter(u=>u.role==='student'&&(!c||u.cls===c));
+const opts=(a,s)=>a.map(x=>`<option${x===s?' selected':''}>${esc(x)}</option>`).join('');
+const go=v=>{S.view=v;render()};
+function login(){const f=$('lid').value.trim().toLowerCase(),p=$('lpw').value;
+const u=db.users.find(u=>u.id.toLowerCase()===f&&u.pass===p&&u.role===S.role);
+if(u){S.user=u;S.view='dash';S.err=''}else S.err='Invalid ID or password for this portal.';render()}
+function pickRole(r){S.role=r;S.err='';render()}
+function setU(id,k,v){db.users.find(u=>u.id===id)[k]=v;save()}
+const inp=(u,k,c)=>`<input class="${c||''}" value="${esc(u[k])}" onchange="setU('${u.id}','${k}',this.value)">`;
+async function readRows(f){const n=f.name.toLowerCase();
+if(n.endsWith('.docx')){const r=await mammoth.convertToHtml({arrayBuffer:await f.arrayBuffer()});
+const d=new DOMParser().parseFromString(r.value,'text/html'),t=d.querySelector('table');
+if(!t)throw new Error('No table found in the Word file');
+return [...t.querySelectorAll('tr')].map(tr=>[...tr.children].map(c=>c.textContent.trim()))}
+const wb=XLSX.read(await f.arrayBuffer());return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''})}
+const col=(h,k)=>h.findIndex(x=>String(x).toLowerCase().includes(k));
+async function upStudents(el,cls){try{const r=await readRows(el.files[0]),h=r[0],ci=col(h,'name'),cc=col(h,'class'),cg=col(h,'gender'),cd=col(h,'id');
+if(ci<0)throw new Error('Need a "Name" column');let n=0;
+r.slice(1).forEach(x=>{const name=String(x[ci]).trim();if(!name)return;
+let id=cd>=0&&x[cd]?String(x[cd]).replace(/[^\w-]/g,''):'s'+String(Date.now()+n).slice(-6);
+if(db.users.some(u=>u.id===id))return;
+db.users.push({id,role:'student',name,pass:'student123',cls:cc>=0&&x[cc]?String(x[cc]):(cls||'Grade 7'),gender:cg>=0?x[cg]:'',dob:'',guardian:'',phone:'',address:''});n++});
+save();alert(n+' students added. Default password: student123');render()}catch(e){alert('Upload failed: '+e.message)}}
+async function upGrades(el){try{const r=await readRows(el.files[0]),h=r[0],ci=col(h,'id'),cs=col(h,'subject'),ct=col(h,'cat'),ce=col(h,'exam');
+if(ci<0)throw new Error('Need a "StudentID" column');let n=0;
+if(cs>=0){r.slice(1).forEach(x=>{const id=String(x[ci]);if(!db.users.some(u=>u.id===id))return;(db.grades[id]=db.grades[id]||{})[x[cs]]={cat:ct>=0?+x[ct]||0:0,exam:ce>=0?+x[ce]||0:0};n++})}
+else{r.slice(1).forEach(x=>{const id=String(x[ci]);if(!db.users.some(u=>u.id===id))return;h.forEach((s,j)=>{if(j!==ci&&s&&!/name|class/i.test(s)&&x[j]!==''){(db.grades[id]=db.grades[id]||{})[s]={cat:0,exam:+x[j]||0};n++}})})}
+save();alert(n+' grade entries imported');render()}catch(e){alert('Upload failed: '+e.message)}}
+async function upTT(el){try{const r=await readRows(el.files[0]);db.tt=r.map(x=>x.map(String));save();render()}catch(e){alert('Upload failed: '+e.message)}}
+function addUser(){const role=$('nr').value,id=$('ni').value.trim().replace(/[^\w-]/g,''),name=$('nn').value.trim();
+if(!id||!name||db.users.some(u=>u.id===id))return alert('Enter a unique ID and a name');
+db.users.push({id,role,name,pass:role==='admin'?'admin123':role==='teacher'?'teach123':'student123',cls:'Grade 7',subject:'',gender:'',dob:'',guardian:'',phone:'',address:''});save();render()}
+function delU(id){if(id===S.user.id)return alert('You cannot delete yourself');if(confirm('Delete '+id+'?')){db.users=db.users.filter(u=>u.id!==id);save();render()}}
+function resetPw(id){const p=prompt('New password for '+id);if(p){setU(id,'pass',p);alert('Password updated')}}
+function chPw(){const p=prompt('Enter a new password');if(p){setU(S.user.id,'pass',p);alert('Password changed')}}
+const ttView=ed=>`<div class="card"><h3>Weekly Timetable</h3>${ed?`<div class="row noprint"><label class="btn">Upload Excel/Word<input type="file" accept=".xlsx,.xls,.csv,.docx" hidden onchange="upTT(this)"></label><button onclick="db.tt.push(db.tt[0].map(()=>''));save();render()">+ Row</button><span class="mut">First row = headings (Period, Monday…)</span></div>`:''}
+<div class="w"><table>${db.tt.map((r,i)=>`<tr>${r.map((c,j)=>i===0?`<th>${esc(c)}</th>`:ed?`<td><input value="${esc(c)}" onchange="db.tt[${i}][${j}]=this.value;save()"></td>`:`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div></div>`;
+const annView=ed=>`<div class="card"><h3>Announcements</h3>${ed?`<div class="row noprint"><input id="at" placeholder="New notice…" style="flex:1"><button class="p" onclick="if($('at').value){db.ann.unshift({t:$('at').value,d:today(),by:S.user.name});save();render()}">Post</button></div>`:''}
+${db.ann.map((a,i)=>`<p><b>${esc(a.t)}</b><br><span class="mut">${a.d} · ${esc(a.by)}</span>${ed?` <button class="d" onclick="db.ann.splice(${i},1);save();render()">×</button>`:''}</p>`).join('')||'<p class="mut">No notices.</p>'}</div>`;
+const regView=()=>{const f=S.f||'';const isA=S.user.role==='admin';return `<div class="card"><h3>Student Register & Bio Information</h3>
+<div class="row noprint"><select onchange="S.f=this.value;render()"><option value="">All classes</option>${opts(CLS,f)}</select>
+<label class="btn">Upload names (Excel/Word)<input type="file" accept=".xlsx,.xls,.csv,.docx" hidden onchange="upStudents(this,S.f)"></label>
+<button onclick="window.print()">Print</button><span class="mut">Columns: Name, Class, Gender, (ID optional)</span></div>
+<div class="w"><table><tr><th>Photo</th><th>ID</th><th>Name</th><th>Class</th><th>Gender</th><th>Date of birth</th><th>Guardian</th><th>Phone</th><th>Address</th>${isA?'<th></th>':''}</tr>
+${studs(f).map(u=>`<tr><td>${pic(u,36)} <label class="btn noprint" style="padding:2px 6px">Edit<input type="file" accept="image/*" hidden onchange="imgUp(this,300,'image/jpeg',d=>{setU('${u.id}','photo',d);render()})"></label></td><td>${esc(u.id)}</td><td>${inp(u,'name')}</td><td>${inp(u,'cls','s')}</td><td>${inp(u,'gender','s')}</td><td>${inp(u,'dob')}</td><td>${inp(u,'guardian')}</td><td>${inp(u,'phone')}</td><td>${inp(u,'address')}</td>${isA?`<td><button class="d" onclick="delU('${u.id}')">×</button></td>`:''}</tr>`).join('')}</table></div>
+<p class="mut">${studs(f).length} students. Changes save automatically.</p></div>`};
+function gradesAdmin(){const f=S.f||'';return `<div class="card"><h3>Grades (all students)</h3><div class="row noprint"><label class="btn">Upload grades (Excel/Word)<input type="file" accept=".xlsx,.xls,.csv,.docx" hidden onchange="upGrades(this)"></label>
+<span class="mut">Long: StudentID, Subject, CAT, Exam — or wide: StudentID, then one column per subject</span></div>
+<div class="row noprint"><select onchange="S.f=this.value;render()"><option value="">All classes</option>${opts(CLS,f)}</select></div>
+<div class="w"><table><tr><th>ID</th><th>Name</th>${SUBJ.map(s=>`<th>${esc(s.slice(0,12))}</th>`).join('')}<th>Avg</th><th>GPA</th></tr>
+${studs(f).map(u=>{const g=db.grades[u.id]||{},a=avgOf(u.id);return `<tr><td>${u.id}</td><td>${esc(u.name)}</td>${SUBJ.map(s=>`<td>${g[s]?tot(g[s]):'–'}</td>`).join('')}<td>${a==null?'–':a.toFixed(1)}</td><td>${fg(gpa(u.id))}</td></tr>`}).join('')}</table></div></div>`}
+function gbView(){const c=S.gc||S.user.cls||CLS[0],s=S.gs||SUBJ[0];return `<div class="card"><h3>Gradebook</h3><div class="row"><select onchange="S.gc=this.value;render()">${opts(CLS,c)}</select><select onchange="S.gs=this.value;render()">${opts(SUBJ,s)}</select>
+<label class="btn">Upload general Excel/Word<input type="file" accept=".xlsx,.xls,.csv,.docx" hidden onchange="upGrades(this)"></label></div>
+<div class="w"><table><tr><th>Name</th><th>CAT (40)</th><th>Exam (60)</th><th>Total</th><th>Grade</th></tr>
+${studs(c).map(u=>{const g=(db.grades[u.id]||{})[s]||{cat:'',exam:''};return `<tr><td>${esc(u.name)}</td><td><input class="s" type="number" value="${g.cat}" onchange="setG('${u.id}','${s}','cat',this.value)"></td><td><input class="s" type="number" value="${g.exam}" onchange="setG('${u.id}','${s}','exam',this.value)"></td><td id="t_${u.id}">${g.cat===''&&g.exam===''?'–':tot(g)}</td><td id="l_${u.id}">${g.cat===''&&g.exam===''?'–':letter(tot(g))}</td></tr>`}).join('')}</table></div></div>`}
+function setG(id,s,k,v){const g=(db.grades[id]=db.grades[id]||{});g[s]=g[s]||{cat:0,exam:0};g[s][k]=+v;save();$('t_'+id).textContent=tot(g[s]);$('l_'+id).textContent=letter(tot(g[s]))}
+function attView(){const c=S.ac||S.user.cls||CLS[0],d=S.ad||today(),k=d+'|'+c,a=db.att[k]||{};return `<div class="card"><h3>Class Register</h3><div class="row"><select onchange="S.ac=this.value;render()">${opts(CLS,c)}</select><input type="date" value="${d}" onchange="S.ad=this.value;render()"></div>
+<div class="w"><table><tr><th>Name</th><th>Status</th></tr>${studs(c).map(u=>`<tr><td>${esc(u.name)}</td><td><select onchange="(db.att['${k}']=db.att['${k}']||{})['${u.id}']=this.value;save()"><option value="">–</option><option value="P"${a[u.id]==='P'?' selected':''}>Present</option><option value="A"${a[u.id]==='A'?' selected':''}>Absent</option></select></td></tr>`).join('')}</table></div></div>`}
+function matView(){const isT=S.user.role!=='student',c=S.user.cls;return `<div class="card"><h3>Lesson Notes, Homework & Library</h3>${isT?`<div class="row"><input id="mt" placeholder="Title"><select id="my">${opts(['Lesson note','Homework','Past paper','Reading list'])}</select><select id="mc">${opts(CLS)}</select><input id="mn" placeholder="Details / link"><button class="p" onclick="if($('mt').value){db.mat.unshift({t:$('mt').value,type:$('my').value,cls:$('mc').value,note:$('mn').value,by:S.user.name});save();render()}">Add</button></div>`:''}
+${db.mat.filter(m=>isT||m.cls===c).map((m,i)=>`<p><span class="tag">${esc(m.type)}</span> <b>${esc(m.t)}</b> <span class="mut">${esc(m.cls)} · ${esc(m.by)}</span><br>${esc(m.note)}${isT?` <button class="d" onclick="db.mat.splice(${i},1);save();render()">×</button>`:''}</p>`).join('')||'<p class="mut">Nothing yet.</p>'}</div>`}
+function conductView(){return `<div class="card"><h3>Discipline & Conduct Logs</h3><div class="row"><select id="cs">${studs().map(u=>`<option value="${u.id}">${esc(u.name)}</option>`).join('')}</select><select id="ck">${opts(['Merit','Behaviour note'])}</select><input id="cn" placeholder="Note" style="flex:1"><button class="p" onclick="if($('cn').value&&$('cs').value){db.conduct.unshift({sid:$('cs').value,type:$('ck').value,note:$('cn').value,by:S.user.name,d:today()});save();render()}">Log</button></div>
+<div class="w"><table><tr><th>Date</th><th>Student</th><th>Type</th><th>Note</th><th>By</th></tr>${db.conduct.map(x=>{const u=db.users.find(u=>u.id===x.sid);return `<tr><td>${x.d}</td><td>${esc(u?u.name:x.sid)}</td><td>${x.type}</td><td>${esc(x.note)}</td><td>${esc(x.by)}</td></tr>`}).join('')}</table></div></div>`}
+function usersView(){return `<div class="card"><h3>User & Role Management</h3><div class="row"><select id="nr">${opts(['student','teacher','admin'])}</select><input id="ni" placeholder="Login ID"><input id="nn" placeholder="Full name"><button class="p" onclick="addUser()">Add user</button></div>
+<div class="w"><table><tr><th>ID</th><th>Role</th><th>Name</th><th>Class / Form</th><th>Subject</th><th>Phone</th><th></th></tr>
+${db.users.map(u=>`<tr><td>${esc(u.id)}</td><td><select onchange="setU('${u.id}','role',this.value)">${opts(['student','teacher','admin'],u.role)}</select></td><td>${inp(u,'name')}</td><td>${inp(u,'cls','s')}</td><td>${inp(u,'subject')}</td><td>${inp(u,'phone')}</td><td><button onclick="resetPw('${u.id}')">Reset pw</button> <button class="d" onclick="delU('${u.id}')">×</button></td></tr>`).join('')}</table></div></div>`}
+function repView(){return `<div class="card"><h3>Terminal Result Sheet & Attendance Summary</h3><div class="row noprint"><button class="p" onclick="window.print()">Print / Save PDF</button></div>
+${CLS.map(c=>`<h3>${c}</h3><div class="w"><table><tr><th>Name</th><th>Average</th><th>Grade</th><th>GPA</th><th>Attendance</th><th>Comment</th></tr>${studs(c).map(u=>{const a=avgOf(u.id),p=attPct(u.id);return `<tr><td>${esc(u.name)}</td><td>${a==null?'–':a.toFixed(1)}</td><td>${a==null?'–':letter(a)}</td><td>${fg(gpa(u.id))}</td><td>${p==null?'–':p+'%'}</td><td>${comment(a)}</td></tr>`}).join('')}</table></div>`).join('')}</div>`}
+function resView(){const u=S.user,g=db.grades[u.id]||{},a=avgOf(u.id);return `<div class="card"><div class="row">${logo(48)}${pic(u,56)}<h3 style="margin:0">Report Card — ${esc(u.name)} (${esc(u.cls)})</h3></div><div class="w"><table><tr><th>Subject</th><th>CAT</th><th>Exam</th><th>Total</th><th>Grade</th></tr>
+${Object.keys(g).map(s=>`<tr><td>${esc(s)}</td><td>${g[s].cat||'–'}</td><td>${g[s].exam||'–'}</td><td>${tot(g[s])}</td><td>${letter(tot(g[s]))}</td></tr>`).join('')||'<tr><td colspan=5 class="mut">No results uploaded yet.</td></tr>'}</table></div>
+<p><b>GPA:</b> ${fg(gpa(u.id))} / 4.00<br><b>Average:</b> ${a==null?'–':a.toFixed(1)} ${a==null?'':'('+letter(a)+')'}<br><b>Teacher comment:</b> ${comment(a)}</p><button class="noprint" onclick="window.print()">Print</button></div>`}
+function profView(){const u=S.user;return `<div class="card"><h3>My Profile</h3><p>${pic(u,90)}</p><p><b>${esc(u.name)}</b> · ${esc(u.id)} · ${esc(u.cls)}</p><p class="mut">Gender: ${esc(u.gender)||'–'} · DOB: ${esc(u.dob)||'–'}<br>Guardian: ${esc(u.guardian)||'–'} · Phone: ${esc(u.phone)||'–'}<br>Address: ${esc(u.address)||'–'}</p><p class="mut">Ask your class teacher to update any details.</p></div>`}
+function dashView(){const r=S.user.role,st=studs(),tp=db.users.filter(u=>u.role==='teacher').length,k=today();
+const T=(n,l)=>`<div class="stat"><b>${n}</b><span>${l}</span></div>`;let s='';
+if(r==='student'){const p=attPct(S.user.id),a=avgOf(S.user.id);s=`<div class="grid">${T(fg(gpa(S.user.id)),'GPA (out of 4.0)')}${T(a==null?'–':a.toFixed(1),'Current average')}${T(p==null?'–':p+'%','Attendance')}${T(db.mat.filter(m=>m.cls===S.user.cls&&m.type==='Homework').length,'Homework items')}</div>`}
+else{let tod=0,pr=0;for(const x in db.att)if(x.startsWith(k))for(const i in db.att[x]){tod++;if(db.att[x][i]==='P')pr++}
+s=`<div class="grid">${T(st.length,'Students enrolled')}${T(tp,'Teachers')}${T(tod?Math.round(100*pr/tod)+'%':'–','Attendance today')}${T(db.ann.length,'Notices')}</div>`}
+return s+annView(false)}
+function scaleView(){return `<div class="card"><h3>Grading Scale & GPA</h3><p class="mut">Total score (CAT + Exam) out of 100. A student's GPA is the average grade points across all their subjects.</p><div class="w"><table><tr><th>Minimum score</th><th>Grade</th><th>Points</th></tr>${db.scale.map((b,i)=>`<tr><td><input class="s" type="number" value="${b.min}" onchange="db.scale[${i}].min=+this.value;save()"></td><td><input class="s" value="${esc(b.l)}" onchange="db.scale[${i}].l=this.value;save()"></td><td><input class="s" type="number" step="0.5" value="${b.p}" onchange="db.scale[${i}].p=+this.value;save()"></td></tr>`).join('')}</table></div><p><button onclick="db.scale=JSON.parse(JSON.stringify(DS));save();render()">Reset to default</button></p></div>`}
+const V={scale:()=>logoCard()+scaleView(),dash:dashView,ann:()=>annView(S.user.role!=='student'),users:usersView,reg:regView,tt:()=>ttView(S.user.role!=='student'),grades:gradesAdmin,gb:gbView,att:attView,mat:matView,conduct:conductView,rep:repView,res:resView,prof:profView};
+function render(){const R=$('root');
+if(!S.user){R.innerHTML=`<div class="login"><h1>${logo(56)} Kerr Cherno Upper Basic School</h1><p class="mut">Upper Niumi, North Bank Region · “Commitment to Excellence”</p>
+<div class="card"><b>Select Your Portal</b><div class="roles">${['student','teacher','admin'].map(r=>`<button class="${S.role===r?'on':''}" onclick="pickRole('${r}')">${r[0].toUpperCase()+r.slice(1)}</button>`).join('')}</div>
+<input id="lid" placeholder="Login ID" autocomplete="username"><input id="lpw" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+<button class="p" style="width:100%" onclick="login()">Sign in as ${S.role}</button>
+<p style="color:var(--warn)">${S.err}</p><p class="mut">Demo logins: admin / admin123 · t001 / teach123 · s001 / stud123</p></div></div>`;return}
+const r=S.user.role;R.innerHTML=`<div class="app"><nav><div class="b">${logo(40)}<br>Kerr Cherno<br>${r[0].toUpperCase()+r.slice(1)} Portal</div>${NAV[r].map(n=>`<button class="${S.view===n[0]?'on':''}" onclick="go('${n[0]}')">${n[1]}</button>`).join('')}</nav>
+<main><div class="top"><h2>${NAV[r].find(n=>n[0]===S.view)[1]}</h2><span>${esc(S.user.name)} <button onclick="chPw()">Password</button> <button onclick="S.user=null;render()">Sign out</button></span></div>${V[S.view]()}</main></div>`}
+render();
+</script></body></html>
